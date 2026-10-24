@@ -1,9 +1,8 @@
-import pytest
-
 from payment_integration.adyen_payment_factory import AdyenPaymentFactory
 from payment_integration.checkout_service import CheckoutService
 from payment_integration.mercado_pago_payment_factory import MercadoPagoPaymentFactory
 from payment_integration.payment_authorizer import PaymentAuthorizer
+from payment_integration.payment_provider import PaymentProvider
 from payment_integration.payment_provider_factory import PaymentProviderFactory
 from payment_integration.refund_processor import RefundProcessor
 from payment_integration.stripe_payment_factory import StripePaymentFactory
@@ -29,19 +28,15 @@ class FakeWebhookVerifier(WebhookVerifier):
 
 class FakePaymentFactory(PaymentProviderFactory):
     def __init__(self):
-        self.calls = []
+        self.calls = 0
 
-    def create_authorizer(self) -> PaymentAuthorizer:
-        self.calls.append("authorizer")
-        return FakeAuthorizer()
-
-    def create_refund_processor(self) -> RefundProcessor:
-        self.calls.append("refund_processor")
-        return FakeRefundProcessor()
-
-    def create_webhook_verifier(self) -> WebhookVerifier:
-        self.calls.append("webhook_verifier")
-        return FakeWebhookVerifier()
+    def create_provider(self) -> PaymentProvider:
+        self.calls += 1
+        return PaymentProvider(
+            authorizer=FakeAuthorizer(),
+            refunds=FakeRefundProcessor(),
+            webhooks=FakeWebhookVerifier(),
+        )
 
 
 # --- Existing behaviour preserved ---
@@ -81,7 +76,7 @@ def test_checkout_works_with_any_family_through_the_contract():
     factory = FakePaymentFactory()
     checkout = CheckoutService(factory)
 
-    assert factory.calls == ["authorizer", "refund_processor", "webhook_verifier"]
+    assert factory.calls == 1  # the whole family is created in one call
     assert checkout.authorize_payment(10) == "fake:authorized:10.00"
     assert checkout.refund_payment(5) == "fake:refunded:5.00"
     assert checkout.verify_webhook("fake-valid") is True
