@@ -1,4 +1,7 @@
-# Payment Provider Integration Family — Starter
+# Payment Provider Integration Family
+
+> **Solution:** refactored with the **Abstract Factory** pattern and a new **Mercado Pago** family.
+> See [DESIGN.md](DESIGN.md) for the roles, pattern rationale and defense answers.
 
 This repository is the starting point for the **Factory Method & Abstract Factory** class activity.
 

@@ -1,35 +1,24 @@
-from .adyen_authorizer import AdyenAuthorizer
-from .adyen_refund_processor import AdyenRefundProcessor
-from .adyen_webhook_verifier import AdyenWebhookVerifier
-from .stripe_authorizer import StripeAuthorizer
-from .stripe_refund_processor import StripeRefundProcessor
-from .stripe_webhook_verifier import StripeWebhookVerifier
+from .payment_provider_factory import PaymentProviderFactory
 
 
 class CheckoutService:
-    def __init__(self, provider: str):
-        self.authorizer = None
-        self.refunds = None
-        self.webhooks = None
-        self._build_integration(provider)
+    """Checkout business logic.
 
-    def _build_integration(self, provider: str) -> None:
-        if provider == "stripe":
-            self.authorizer = StripeAuthorizer()
-            self.refunds = StripeRefundProcessor()
-            self.webhooks = StripeWebhookVerifier()
-        elif provider == "adyen":
-            self.authorizer = AdyenAuthorizer()
-            self.refunds = AdyenRefundProcessor()
-            self.webhooks = AdyenWebhookVerifier()
-        else:
-            raise ValueError(f"Unsupported provider: {provider}")
+    Depends only on the abstract factory and the abstract product roles.
+    It never names Stripe, Adyen, Mercado Pago or any other concrete class:
+    the provider family is injected from outside (dependency injection).
+    """
+
+    def __init__(self, provider_factory: PaymentProviderFactory):
+        self._authorizer = provider_factory.create_authorizer()
+        self._refunds = provider_factory.create_refund_processor()
+        self._webhooks = provider_factory.create_webhook_verifier()
 
     def authorize_payment(self, amount: float) -> str:
-        return self.authorizer.authorize(amount)
+        return self._authorizer.authorize(amount)
 
     def refund_payment(self, amount: float) -> str:
-        return self.refunds.refund(amount)
+        return self._refunds.refund(amount)
 
     def verify_webhook(self, signature: str) -> bool:
-        return self.webhooks.verify(signature)
+        return self._webhooks.verify(signature)
