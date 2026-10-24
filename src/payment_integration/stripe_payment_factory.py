@@ -1,20 +1,15 @@
-from .payment_authorizer import PaymentAuthorizer
 from .payment_provider_factory import PaymentProviderFactory
-from .refund_processor import RefundProcessor
+from .payment_provider import PaymentProvider
 from .stripe_authorizer import StripeAuthorizer
 from .stripe_refund_processor import StripeRefundProcessor
 from .stripe_webhook_verifier import StripeWebhookVerifier
-from .webhook_verifier import WebhookVerifier
 
 
 class StripePaymentFactory(PaymentProviderFactory):
-    """Concrete factory for the Stripe family."""
 
-    def create_authorizer(self) -> PaymentAuthorizer:
-        return StripeAuthorizer()
-
-    def create_refund_processor(self) -> RefundProcessor:
-        return StripeRefundProcessor()
-
-    def create_webhook_verifier(self) -> WebhookVerifier:
-        return StripeWebhookVerifier()
+    def create_provider(self) -> PaymentProvider:
+        return PaymentProvider(
+            authorizer=StripeAuthorizer(),
+            refunds=StripeRefundProcessor(),
+            webhooks=StripeWebhookVerifier(),
+        )
